@@ -1,6 +1,7 @@
 package com.dhairya.expensetracker.service;
 
 import com.dhairya.expensetracker.entity.UserInfo;
+import com.dhairya.expensetracker.eventProducer.UserInfoProducer;
 import com.dhairya.expensetracker.model.UserInfoDto;
 import com.dhairya.expensetracker.repository.UserRepository;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,8 @@ public class UserDetailsImpl implements UserDetailsService {
     private final UserRepository userRepository;
     @Autowired
     private final PasswordEncoder passwordEncoder;
+    @Autowired
+    private final UserInfoProducer userInfoProducer;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -43,10 +46,11 @@ public class UserDetailsImpl implements UserDetailsService {
         }
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setUserId(UUID.randomUUID().toString());
-        userRepository.save(new UserInfo(user.getUserId(),user.getUserName(),user.getPassword(), new HashSet<>()));
+        user.setPhoneNumber(user.getPhoneNumber());
+        userRepository.save(new UserInfo(user.getUserId(),user.getUsername(),user.getPassword(), new HashSet<>()));
+        System.out.println("Data sent to producer" + user.getPhoneNumber());
+        userInfoProducer.sendEventToKafka(user);
         return true;
-
-
     }
 
 }

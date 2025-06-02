@@ -1,5 +1,6 @@
 package com.dhairya.expensetracker.config;
 
+import com.dhairya.expensetracker.eventProducer.UserInfoProducer;
 import com.dhairya.expensetracker.filters.JwtAuthFilter;
 import com.dhairya.expensetracker.repository.UserRepository;
 import com.dhairya.expensetracker.service.UserDetailsImpl;
@@ -35,10 +36,9 @@ public class SecurityConfig {
     private final UserDetailsImpl userDetailsServiceImpl;
     @Autowired
     private final JwtAuthFilter jwtAuthFilter;
-
     @Bean
-    public UserDetailsService userDetailsService(UserRepository userRepository,PasswordEncoder passwordEncoder) {
-        return new UserDetailsImpl(userRepository,passwordEncoder);
+    public UserDetailsService userDetailsService(UserRepository userRepository,PasswordEncoder passwordEncoder,UserInfoProducer userInfoProducer) {
+        return new UserDetailsImpl(userRepository,passwordEncoder,userInfoProducer);
     }
 
     @Bean

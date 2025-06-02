@@ -9,7 +9,7 @@ import lombok.Data;
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 @Data
 public class UserInfoDto extends UserInfo {
-    private String userName;
+    private String firstName;
     private String lastName;
     private String email;
     private String phoneNumber;
