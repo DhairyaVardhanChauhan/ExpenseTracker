@@ -41,13 +41,12 @@ public class TokenController {
 
     }
 
-    @PostMapping("auth/v1/refreshToken")
+        @PostMapping("auth/v1/refreshToken")
     public JwtResponseDto refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
         return refreshTokenService.findByToken(refreshTokenDto.getToken()).map((refreshToken)->refreshTokenService.verifyExpiration(refreshToken)).map((RefreshToken::getUserInfo)).map((userInfo)->{
             String accessToken = jwtService.generateToken(userInfo.getUsername());
             return JwtResponseDto.builder().accessToken(accessToken).build();
         }).orElseThrow(()-> new RuntimeException("Refresh token not found!"));
-
     }
 
     @GetMapping("/test")

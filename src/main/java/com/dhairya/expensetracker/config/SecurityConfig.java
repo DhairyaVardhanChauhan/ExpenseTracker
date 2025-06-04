@@ -24,7 +24,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-
 @Configuration
 @EnableMethodSecurity
 @Data
@@ -36,6 +35,8 @@ public class SecurityConfig {
     private final UserDetailsImpl userDetailsServiceImpl;
     @Autowired
     private final JwtAuthFilter jwtAuthFilter;
+    @Autowired
+    private CustomAuthenticationEntryPoint customAuthEntryPoint;
     @Bean
     public UserDetailsService userDetailsService(UserRepository userRepository,PasswordEncoder passwordEncoder,UserInfoProducer userInfoProducer) {
         return new UserDetailsImpl(userRepository,passwordEncoder,userInfoProducer);
@@ -51,6 +52,7 @@ public class SecurityConfig {
         http.httpBasic(Customizer.withDefaults());
         http.addFilterBefore(jwtAuthFilter,UsernamePasswordAuthenticationFilter.class);
         http.authenticationProvider(authenticationProvider());
+        http.exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthEntryPoint));
         return http.build();
     }
 
