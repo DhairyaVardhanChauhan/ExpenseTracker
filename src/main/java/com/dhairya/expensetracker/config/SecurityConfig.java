@@ -49,10 +49,8 @@ public class SecurityConfig {
         http.authorizeHttpRequests((auth)->auth.requestMatchers("/auth/v1/login","/auth/v1/refreshToken","auth/v1/signup").permitAll().anyRequest().authenticated());
 
         http.sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-        http.httpBasic(Customizer.withDefaults());
         http.addFilterBefore(jwtAuthFilter,UsernamePasswordAuthenticationFilter.class);
         http.authenticationProvider(authenticationProvider());
-        http.exceptionHandling(ex -> ex.authenticationEntryPoint(customAuthEntryPoint));
         return http.build();
     }
 
