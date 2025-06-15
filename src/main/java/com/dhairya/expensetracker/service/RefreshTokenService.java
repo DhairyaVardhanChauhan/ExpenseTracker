@@ -7,6 +7,7 @@ import com.dhairya.expensetracker.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -20,8 +21,17 @@ public class RefreshTokenService {
     private UserRepository userRepository;
 
     public RefreshToken createRefreshToken(String username) {
-        UserInfo extractedUser = userRepository.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-        RefreshToken refreshToken = RefreshToken.builder().userInfo(extractedUser).token(UUID.randomUUID().toString()).expiryDate(Instant.now().plusMillis(600000)).build();
+        UserInfo extractedUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Optional<RefreshToken> existingTokenOpt = refreshTokenRepository.findByUserInfo_UserId(extractedUser.getUserId());
+
+        RefreshToken refreshToken = existingTokenOpt.orElseGet(RefreshToken::new);
+
+        refreshToken.setUserInfo(extractedUser);
+        refreshToken.setToken(UUID.randomUUID().toString());
+        refreshToken.setExpiryDate(Instant.now().plus(Duration.ofHours(1)));
+
         return refreshTokenRepository.save(refreshToken);
     }
 

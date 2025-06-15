@@ -18,7 +18,7 @@ import java.util.Set;
 public class UserInfo {
 
     @Id
-    @Column(name = "user_id")
+    @Column(name = "user_id", columnDefinition = "VARCHAR(36)")
     private String userId;
     private String username;
     private String password;

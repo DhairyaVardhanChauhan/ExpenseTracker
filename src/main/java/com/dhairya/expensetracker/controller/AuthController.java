@@ -3,16 +3,21 @@ package com.dhairya.expensetracker.controller;
 import com.dhairya.expensetracker.entity.RefreshToken;
 import com.dhairya.expensetracker.model.UserInfoDto;
 import com.dhairya.expensetracker.response.JwtResponseDto;
+import com.dhairya.expensetracker.response.PingResponse;
 import com.dhairya.expensetracker.service.JwtService;
 import com.dhairya.expensetracker.service.RefreshTokenService;
 import com.dhairya.expensetracker.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Objects;
 
 @RestController
 public class AuthController {
@@ -25,6 +30,9 @@ public class AuthController {
 
     @Autowired
     private JwtService jwtService;
+    @Qualifier("userDetailsService")
+    @Autowired
+    private UserDetailsService userDetailsService;
 
     @PostMapping("/auth/v1/signup")
     public ResponseEntity signup(@RequestBody UserInfoDto userInfoDto){
@@ -41,15 +49,16 @@ public class AuthController {
         }
     }
 
-    @GetMapping("/ping")
-    public ResponseEntity<String> ping(){
+    @GetMapping("/auth/v1/ping")
+    public ResponseEntity ping(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication != null && authentication.isAuthenticated()){
-            return ResponseEntity.ok("Pong");
+            PingResponse pingResponse = userDetailsImpl.getUserIdFromUserName(authentication.getName());
+            if(Objects.nonNull(pingResponse)){
+                return ResponseEntity.ok(pingResponse);
+            }
         }
-        else{
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("unauthorized!");
-        }
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("unauthorized!");
     }
 
 }

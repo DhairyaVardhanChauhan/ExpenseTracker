@@ -46,7 +46,7 @@ public class SecurityConfig {
     SecurityFilterChain securityFilterChain(HttpSecurity http,JwtAuthFilter jwtAuthFilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable).cors(CorsConfigurer::disable);
 
-        http.authorizeHttpRequests((auth)->auth.requestMatchers("/auth/v1/login","/auth/v1/refreshToken","auth/v1/signup").permitAll().anyRequest().authenticated());
+        http.authorizeHttpRequests((auth)->auth.requestMatchers("/auth/v1/login","/auth/v1/refreshToken","/auth/v1/signup","/auth/v1/forgotPassword","/auth/v1/reset/password/**").permitAll().anyRequest().authenticated());
 
         http.sessionManagement(sess->sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.addFilterBefore(jwtAuthFilter,UsernamePasswordAuthenticationFilter.class);
