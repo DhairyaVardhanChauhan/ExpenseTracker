@@ -7,8 +7,13 @@ import com.dhairya.expensetracker.model.UserInfoDto;
 import com.dhairya.expensetracker.repository.PasswordResetRepository;
 import com.dhairya.expensetracker.repository.UserExtraInfoRepository;
 import com.dhairya.expensetracker.repository.UserRepository;
+import com.dhairya.expensetracker.response.GoogleTokenResponse;
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.nimbusds.jose.shaded.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,11 +21,15 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.UUID;
 
 import com.dhairya.expensetracker.utils.Constants;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import javax.mail.Authenticator;
 import javax.mail.PasswordAuthentication;
@@ -34,6 +43,15 @@ public class PasswordService {
     private final PasswordEncoder  passwordEncoder;
     private final UserExtraInfoRepository userInfoDtoRepository;
     private final PasswordResetRepository passwordResetRepository;
+
+    @Value("${google.client.secret}")
+    private String clientSecret;
+    @Value("${google.client.id}")
+    private String clientId;
+    @Value("${google.app.key}")
+    private String appKey;
+    @Value("${google.app.mail}")
+    private String appMail;
 
     public PasswordResetDto createToken(String email){
         UserExtraInfo user = userInfoDtoRepository.findByEmail(email);
@@ -61,7 +79,7 @@ public class PasswordService {
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication("trash93119@gmail.com", "jjukcwtnxgrvjdcp");
+                return new PasswordAuthentication(appMail, appKey);
             }
         });
         mailingService.sendEmail(session,toEmail,Constants.GET_FORGOT_PASSWORD_SUBJECT, getForgotPasswordBody(passwordResetDto));
@@ -94,5 +112,37 @@ public class PasswordService {
     """.formatted(encodedToken);
     }
 
+
+    public String getOauthAccessTokenGoogle(String code){
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("code", code);
+        params.add("redirect_uri", "http://localhost:9898/auth/v1/oauth/callback");
+        params.add("client_id", clientId);
+        params.add("client_secret", clientSecret);
+        params.add("scope", "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile");
+        params.add("scope", "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email");
+        params.add("scope", "openid");
+        params.add("grant_type", "authorization_code");
+        HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, httpHeaders);
+        String url = "https://oauth2.googleapis.com/token";
+        ResponseEntity<GoogleTokenResponse> response = restTemplate.postForEntity(url, requestEntity, GoogleTokenResponse.class);
+        return Objects.requireNonNull(response.getBody()).getAccessToken();
+    }
+
+    public void getProfileDetailsGoogle(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setBearerAuth(accessToken);
+
+        HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
+
+        String url = "https://www.googleapis.com/oauth2/v2/userinfo";
+        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
+        JsonObject jsonObject = new Gson().fromJson(response.getBody(), JsonObject.class);
+        System.out.println(jsonObject);
+    }
 
 }

@@ -5,6 +5,7 @@ import com.dhairya.expensetracker.model.UserInfoDto;
 import com.dhairya.expensetracker.response.JwtResponseDto;
 import com.dhairya.expensetracker.response.PingResponse;
 import com.dhairya.expensetracker.service.JwtService;
+import com.dhairya.expensetracker.service.PasswordService;
 import com.dhairya.expensetracker.service.RefreshTokenService;
 import com.dhairya.expensetracker.service.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,8 @@ public class AuthController {
     @Qualifier("userDetailsService")
     @Autowired
     private UserDetailsService userDetailsService;
+    @Autowired
+    private PasswordService passwordService;
 
     @PostMapping("/auth/v1/signup")
     public ResponseEntity signup(@RequestBody UserInfoDto userInfoDto){
@@ -59,6 +62,13 @@ public class AuthController {
             }
         }
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("unauthorized!");
+    }
+
+    @GetMapping("/auth/v1/oauth/callback")
+    public String grantCode(@RequestParam("code") String code, @RequestParam("scope") String scope, @RequestParam("authuser") String authUser, @RequestParam("prompt") String prompt) {
+        String accessToken = passwordService.getOauthAccessTokenGoogle(code);
+        passwordService.getProfileDetailsGoogle(accessToken);
+        return "";
     }
 
 }
