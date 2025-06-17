@@ -7,6 +7,7 @@ import com.dhairya.expensetracker.model.UserInfoDto;
 import com.dhairya.expensetracker.repository.PasswordResetRepository;
 import com.dhairya.expensetracker.repository.UserExtraInfoRepository;
 import com.dhairya.expensetracker.repository.UserRepository;
+import com.dhairya.expensetracker.request.GoogleUserInfoDto;
 import com.dhairya.expensetracker.response.GoogleTokenResponse;
 import com.nimbusds.jose.shaded.gson.Gson;
 import com.nimbusds.jose.shaded.gson.JsonObject;
@@ -124,6 +125,8 @@ public class PasswordService {
         params.add("client_secret", clientSecret);
         params.add("scope", "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.profile");
         params.add("scope", "https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fuserinfo.email");
+        params.add("scope", "https://www.googleapis.com/auth/user.phonenumbers.read");
+        params.add("scope", "https://www.googleapis.com/auth/contacts.readonly");
         params.add("scope", "openid");
         params.add("grant_type", "authorization_code");
         HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(params, httpHeaders);
@@ -132,7 +135,7 @@ public class PasswordService {
         return Objects.requireNonNull(response.getBody()).getAccessToken();
     }
 
-    public void getProfileDetailsGoogle(String accessToken) {
+    public GoogleUserInfoDto getProfileDetailsGoogle(String accessToken) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setBearerAuth(accessToken);
@@ -140,9 +143,8 @@ public class PasswordService {
         HttpEntity<String> requestEntity = new HttpEntity<>(httpHeaders);
 
         String url = "https://www.googleapis.com/oauth2/v2/userinfo";
-        ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, String.class);
-        JsonObject jsonObject = new Gson().fromJson(response.getBody(), JsonObject.class);
-        System.out.println(jsonObject);
+        ResponseEntity<GoogleUserInfoDto> response = restTemplate.exchange(url, HttpMethod.GET, requestEntity, GoogleUserInfoDto.class);
+        return response.getBody();
     }
 
 }

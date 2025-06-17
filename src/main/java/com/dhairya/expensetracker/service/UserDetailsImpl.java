@@ -9,6 +9,7 @@ import com.dhairya.expensetracker.repository.PasswordResetRepository;
 import com.dhairya.expensetracker.repository.UserExtraInfoRepository;
 import com.dhairya.expensetracker.repository.UserRepository;
 import com.dhairya.expensetracker.response.PingResponse;
+import com.dhairya.expensetracker.utils.Constants;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,17 +51,25 @@ public class UserDetailsImpl implements UserDetailsService {
         return userRepository.findByUsername(username).orElse(null);
     }
 
-    public Boolean signUpUser(UserInfoDto user) {
+    public Boolean signUpUser(UserInfoDto user,Constants.AuthProvider provider) {
 
         if(Objects.nonNull(checkIfUserAlreadyExists(user.getUsername()))) {
             return false;
         }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setUserId(UUID.randomUUID().toString());
-        userRepository.save(new UserInfo(user.getUserId(),user.getUsername(),user.getPassword(), new HashSet<>()));
-        System.out.println("Data sent to producer" + user.getPhoneNumber());
-        userInfoProducer.sendEventToKafka(user);
+        if(Constants.AuthProvider.LOCAL.equals(provider)){
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            userRepository.save(new UserInfo(user.getUserId(),user.getUsername(),user.getPassword(), Constants.AuthProvider.LOCAL,new HashSet<>()));
+            System.out.println("Data sent to producer" + user.getPhoneNumber());
+            userInfoProducer.sendEventToKafka(user);
+        }
+        else if(Constants.AuthProvider.GOOGLE.equals(provider)){
+            userRepository.save(new UserInfo(user.getUserId(),user.getUsername(),null, Constants.AuthProvider.GOOGLE,new HashSet<>()));
+            System.out.println("Data sent to producer" + user.getPhoneNumber());
+            userInfoProducer.sendEventToKafka(user);
+        }
         return true;
+
     }
 
     public PingResponse getUserIdFromUserName(String username) {

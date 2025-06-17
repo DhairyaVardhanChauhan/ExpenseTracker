@@ -1,5 +1,6 @@
 package com.dhairya.expensetracker.entity;
 
+import com.dhairya.expensetracker.utils.Constants;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,6 +23,11 @@ public class UserInfo {
     private String userId;
     private String username;
     private String password;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "auth_provider")
+    private Constants.AuthProvider authProvider = Constants.AuthProvider.LOCAL;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "users_roles",
